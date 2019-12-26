@@ -23,32 +23,20 @@ g = 9.81
 
 
 def deriv(y, t, L1, L2, m1, m2):
-    """Return the first derivatives of y = theta1, z1, theta2, z2."""
     theta1, z1, theta2, z2 = y
-
     c, s = np.cos(theta1 - theta2), np.sin(theta1 - theta2)
-
     theta1dot = z1
     z1dot = (m2 * g * np.sin(theta2) * c - m2 * s * (L1 * z1**2 * c + L2 * z2**2) - (m1 + m2) * g * np.sin(theta1)) / L1 / (m1 + m2 * s**2)
     theta2dot = z2
     z2dot = ((m1 + m2) * (L1 * z1**2 * s - g * np.sin(theta2) + g * np.sin(theta1) * c) + m2 * L2 * z2**2 * s * c) / L2 / (m1 + m2 * s**2)
+
     return theta1dot, z1dot, theta2dot, z2dot
 
 
 def solve(L1, L2, m1, m2, tmax, dt, y0):
     t = np.arange(0, tmax + dt, dt)
-
-    # Do the numerical integration of the equations of motion
     y = odeint(deriv, y0, t, args=(L1, L2, m1, m2))
-    theta1, theta2 = y[:, 0], y[:, 2]
-
-    # Convert to Cartesian coordinates of the two bob positions.
-    x1 = L1 * np.sin(theta1)
-    y1 = -L1 * np.cos(theta1)
-    x2 = x1 + L2 * np.sin(theta2)
-    y2 = y1 - L2 * np.cos(theta2)
-
-    return theta1, theta2, x1, y1, x2, y2
+    return y[:, 0], y[:, 2]
 
 
 def gen_simulation_model_params(theta_resolution):
@@ -60,11 +48,10 @@ def gen_simulation_model_params(theta_resolution):
 
 def simulate_pendulum(theta_resolution, dt=DEFAULT_DT, tmax=DEFAULT_TMAX, L1=DEFAULT_L1, L2=DEFAULT_L2, m1=DEFAULT_M1, m2=DEFAULT_M2):
     for theta1_init, theta2_init in gen_simulation_model_params(theta_resolution):
-        # Initial conditions: theta1_init, dtheta1_init/dt, theta2_init, dtheta2_init/dt.
         y0 = np.array([theta1_init, 0, theta2_init, 0])
+        theta1, theta2 = solve(L1, L2, m1, m2, tmax, dt, y0)
 
-        theta1, theta2, x1, y1, x2, y2 = solve(L1, L2, m1, m2, tmax, dt, y0)
-        yield theta1_init, theta2_init, theta1, theta2, x1, y1, x2, y2
+        yield theta1_init, theta2_init, theta1[-1], theta2[-1]
 
 
 def convert_results(results):
@@ -72,8 +59,8 @@ def convert_results(results):
         yield {
             'theta1_init': r[0],
             'theta2_init': r[1],
-            'theta1': r[2][-1],
-            'theta2': r[3][-1],
+            'theta1': r[2],
+            'theta2': r[3],
         }
 
 
@@ -114,13 +101,13 @@ def main():
         help="Simulation time step, %f by default" % DEFAULT_DT
     )
     args = parser.parse_args()
+
     results = simulate_pendulum(
         theta_resolution=args.resolution,
         dt=args.dt,
         tmax=args.tmax,
     )
     converted_results = convert_results(results)
-
     write_csv(args.results_file, converted_results)
 
 
