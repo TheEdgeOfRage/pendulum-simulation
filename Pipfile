@@ -6,8 +6,8 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-matplotlib = "*"
-scipy = "*"
+scipy = "==1.4.1"
+celery = {extras = ["librabbitmq", "redis"],version = "*"}
 
 [requires]
 python_version = "3"

@@ -1,0 +1,12 @@
+.git
+.gitignore
+
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+.editorconfig
+LICENSE
+
+output
+*.csv

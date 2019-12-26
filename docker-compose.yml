@@ -1,0 +1,35 @@
+version: '3'
+services:
+  worker:
+    build: .
+    environment:
+      MAX_CPU_CORES: 8
+      COMPUTER_TYPE: worker
+    depends_on:
+      - redis
+      - rabbitmq
+
+  server:
+    build: .
+    environment:
+      MAX_CPU_CORES: 1
+      COMPUTER_TYPE: server
+      PENDULUM_L1: 1
+      PENDULUM_L2: 1
+      PENDULUM_M1: 1
+      PENDULUM_M2: 1
+      PENDULUM_TMAX: 30
+      PENDULUM_DT: 0.01
+      PENDULUM_THETA_RESOLUTION: 6
+    depends_on:
+      - redis
+      - rabbitmq
+    volumes:
+      - ./output:/output
+
+  redis:
+    image: redis:alpine
+
+  rabbitmq:
+    image: rabbitmq:alpine
+
